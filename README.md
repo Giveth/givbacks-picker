@@ -5,7 +5,7 @@ A Next.js application for selecting and displaying GIVbacksV2 Raffle winners.
 ## Features
 
 - Randomly fetches 5 winning transacton hashed from the list of eligible donations from a GIVbacks Round
-- Each transaction hash inputted has a proportional proportional chance of winning, determined by its "USDvalueafterGIVbacksfactor" (i.e. the odds of winning are affected by the donation size & the givbacks % of the project donated to
+- Each transaction hash inputted has a proportional proportional chance of winning, determined by its "USDvalueafterGIVbacksfactor" (i.e. the odds of winning are affected by the donation size & the givbacks % of the project donated to)
 - A single donor address can only win once (even if they are associated with multiple transaction hashes)
 - Displays winners in a stylish Twitter-like interface)
 - Allows copying all winners to clipboard
