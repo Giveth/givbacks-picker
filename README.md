@@ -1,4 +1,4 @@
-# GIVBack Winners Picker
+# GIVbacksV2 Winners Picker
 
 A Next.js application for selecting and displaying GIVbacksV2 Raffle winners.
 
