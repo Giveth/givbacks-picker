@@ -1,0 +1,57 @@
+@font-face {
+  font-family: 'Chirp';
+  src: url('/fonts/chirp-regular-web.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Chirp';
+  src: url('/fonts/chirp-medium-web.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Chirp';
+  src: url('/fonts/chirp-bold-web.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+}
+
+:root {
+  --background: #151515;
+  --foreground: #e1e8ed;
+  --text: #ffffff;
+  --primary: #8a2be2;
+  --button-bg: linear-gradient(135deg, #9b4deb, #8a2be2);
+  --button-text: #ffffff;
+  --button-hover: linear-gradient(135deg, #8a2be2, #7209b7);
+  --container-bg: linear-gradient(to bottom, #5125ec, #8a2be2, #151515);
+  --item-bg: #22303c;
+  --item-hover: #2a3a4a;
+  --error: #f7567c;
+  --selection-background: #264f78;
+  --selection-color: #ffffff;
+  --header-color: #fffdc3;
+  --winner-color: #fffdc3;
+  --border-glow: rgba(138, 43, 226, 0.5);
+  --container-hover-bg: #22303c;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Chirp', Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+  transition: color 0.3s ease, background 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--header-color);
+}
+
+::selection {
+  background: var(--selection-background);
+  color: var(--selection-color);
+}

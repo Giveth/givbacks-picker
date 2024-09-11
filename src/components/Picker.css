@@ -1,0 +1,268 @@
+.picker-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Changed from center to flex-start */
+  min-height: 100vh;
+  padding: 1rem;
+  padding-top: 5vh; /* Add top padding to push content down a bit */
+}
+
+.twitter-picker {
+  width: 100%;
+  max-width: 700px; /* Changed back to 700px for default */
+  padding: 1rem 1.5rem;
+  margin-top: 0.25rem;
+  color: #fffdc3e8;
+  border-radius: 16px;
+  box-shadow: 
+    0 4px 10px rgba(81, 37, 236, 0.3),
+    0 6px 4px -4px rgba(81, 37, 236, 0.5),
+    0 8px 6px -5px rgba(81, 37, 236, 0.2),
+    0 0 5px rgba(81, 37, 236, 0.4);
+  border: 2px solid #5125ec;
+  background: var(--container-bg);
+  transition: all 0.3s ease;
+}
+
+.twitter-picker:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 8px 20px rgba(255, 253, 195, 0.3),
+    0 12px 8px -8px rgba(255, 253, 195, 0.5),
+    0 16px 12px -10px rgba(255, 253, 195, 0.2),
+    0 0 10px rgba(255, 253, 195, 0.4);
+}
+
+.twitter-picker h1 {
+  font-size: 2.5rem; /* Larger font size for default */
+  font-weight: bold;
+  color: #fffdc3e8;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  margin-top: 0;
+  text-shadow: 0 0 10px var(--border-glow);
+}
+
+.twitter-picker h2 {
+  font-size: 1.5rem; /* Larger font size for default */
+  font-weight: bold;
+  color: #fffdc3e8;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  margin-top: 0;
+  text-shadow: 0 0 10px var(--border-glow);
+}
+
+/* Media query for smaller screens */
+@media (max-width: 700px) {
+  .twitter-picker {
+    max-width: 90%; /* Change to percentage-based width */
+    padding: 1rem; /* Reduce padding */
+  }
+
+  .twitter-picker h1 {
+    font-size: 1.8rem; /* Slightly smaller font size */
+  }
+
+  .winners-title {
+    font-size: 1.1rem;
+  }
+
+  .copy-button {
+    font-size: 0.8rem;
+    width: 40px; /* Smaller button size */
+    height: 40px;
+  }
+
+  .winner-item {
+    padding: 0.3rem 4rem;
+    font-size: 0.6rem; /* Slightly larger than before, but still small */
+    flex-wrap: wrap; /* Allow content to wrap */
+    justify-content: flex-start; /* Align items to the start */
+  }
+
+  .winner-rank {
+    min-width: 1rem;
+    margin-right: 0.3rem;
+  }
+
+  .winner-name {
+    width: calc(100% - 1.3rem); /* Full width minus rank width */
+    word-break: break-all; /* Break long words */
+    overflow-wrap: break-word; /* Ensure words wrap */
+  }
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px; /* Space between buttons */
+  margin-bottom: 20px;
+  min-height: 60px;
+}
+
+.pick-button,
+.copy-button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  background-color: var(--button-bg);
+  color: #fffdc3e8;
+  border: 3px solid #5125ec;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 10px rgba(81, 37, 236, 0.3),
+    0 6px 4px -4px rgba(81, 37, 236, 0.5),
+    0 8px 6px -5px rgba(81, 37, 236, 0.2),
+    0 0 5px rgba(81, 37, 236, 0.4);
+}
+
+.pick-button:hover,
+.copy-button:not(:disabled):hover {
+  background-color: var(--button-hover);
+  transform: translateY(-4px);
+  box-shadow: 
+    0 8px 20px rgba(255, 253, 195, 0.3),
+    0 12px 8px -8px rgba(255, 253, 195, 0.5),
+    0 16px 12px -10px rgba(255, 253, 195, 0.2),
+    0 0 10px rgba(255, 253, 195, 0.4);
+}
+
+.pick-button:disabled,
+.copy-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.magic-icon,
+.copy-icon {
+  font-size: 20px;
+}
+
+.copy-button {
+  opacity: 0.5;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.copy-button.visible {
+  opacity: 1;
+}
+
+.error-message {
+    color: red;
+  text-align: center;
+  margin-top: 1rem;
+  font-weight: bold;
+}
+
+.winners-container {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(81, 37, 236, 0.05);
+  border-radius: 16px;
+  border: 2px solid #5125ec;
+  box-shadow: 
+    0 4px 10px rgba(81, 37, 236, 0.3),
+    0 6px 4px -4px rgba(81, 37, 236, 0.5),
+    0 8px 6px -5px rgba(81, 37, 236, 0.2),
+    0 0 5px rgba(81, 37, 236, 0.4);
+  transition: all 0.3s ease;
+}
+
+.winners-container:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 8px 20px rgba(255, 253, 195, 0.3),
+    0 12px 8px -8px rgba(255, 253, 195, 0.5),
+    0 16px 12px -10px rgba(255, 253, 195, 0.2),
+    0 0 10px rgba(255, 253, 195, 0.4);
+}
+
+.winners-title {
+  color: #fffdc3e8;
+  font-size: 1.2rem; /* Smaller font size for the winners title on small screens */
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  margin-top: 0;
+  text-align: center;
+}
+
+.winners-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.winner-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 2.5rem 0.4rem 3rem;
+  background: var(--button-bg);
+  border-radius: 9999px;
+  border: 2px solid #5125ec;
+  font-weight: 500;
+  color: #fffdc3e8;
+  transition: all 0.3s ease;
+  box-shadow: 
+    0 4px 10px rgba(81, 37, 236, 0.3),
+    0 0 5px rgba(81, 37, 236, 0.4);
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.winner-item:hover {
+  background: var(--button-hover);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 20px rgba(255, 253, 195, 0.3),
+    0 12px 8px -8px rgba(255, 253, 195, 0.5),
+    0 16px 12px -10px rgba(255, 253, 195, 0.2),
+    0 0 10px rgba(255, 253, 195, 0.4);
+}
+
+.winner-rank {
+  position: absolute;
+  top: 50%;
+  left: .2rem; /* Adjusted slightly */
+  transform: translateY(-50%);
+  background-color: var(--button-bg);
+  color: #fffdc3e8;
+  border: 2px solid #5125ec;
+  border-radius: 50%;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+  z-index: 2;
+}
+
+/* Update the media query for smaller screens */
+@media (max-width: 700px) {
+  .winner-item {
+    padding: 0.3rem 1.8rem 0.3rem 2rem; /* Adjusted padding */
+    font-size: 0.5rem;
+    justify-content: flex-start; /* Align content to the start */
+  }
+
+  .winner-rank {
+    width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.6rem;
+    left: 0rem; /* Moved slightly to the right */
+  }
+
+  .winner-string {
+    font-size: 0.5rem;
+    margin-left: 0.5rem; /* Add left margin to move text to the right */
+  }
+}

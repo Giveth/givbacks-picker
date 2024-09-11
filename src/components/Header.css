@@ -1,0 +1,108 @@
+/* Add this at the beginning of the file */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.header {
+  background-color: var(--primary-color);
+  padding: 1rem;
+  width: 100%;
+  color: var(--header-color);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 95%;
+  padding: 0 1.5rem; /* Increased horizontal padding */
+}
+
+.logo {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #fffdc3e8;
+  transition: all 0.3s ease;
+  border-radius: 16px;
+  display: inline-block;
+  position: relative;
+}
+
+.logo:hover {
+  transform: translateY(-4px);
+}
+
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.logo-image {
+  transition: all 0.3s ease;
+  border-radius: 50%; /* Make it perfectly circular */
+  width: 48px; /* Adjust this to match the exact size of your PNG */
+  height: 48px; /* Adjust this to match the exact size of your PNG */
+  overflow: hidden; /* Ensure the image doesn't spill outside the circular boundary */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent; /* Ensure no background color */
+}
+
+.logo-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* This will ensure the image covers the entire circular area */
+}
+
+.logo-image:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 8px 20px rgba(255, 253, 195, 0.3),
+    0 12px 8px -8px rgba(255, 253, 195, 0.5),
+    0 16px 12px -10px rgba(255, 253, 195, 0.2),
+    0 0 10px rgba(255, 253, 195, 0.4);
+}
+
+@media (max-width: 768px) {
+  .header-content {
+    padding: 0 1rem; /* Adjusted padding for smaller screens */
+  }
+
+  .logo {
+    font-size: 1.5rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .logo:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 4px 10px rgba(255, 253, 195, 0.3),
+      0 6px 4px -4px rgba(255, 253, 195, 0.5),
+      0 8px 6px -5px rgba(255, 253, 195, 0.2),
+      0 0 5px rgba(255, 253, 195, 0.4);
+  }
+
+  .theme-toggle-button {
+    margin-right: 0.5rem; /* Adjusted margin for smaller screens */
+  }
+
+  .theme-toggle-button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .logo-image {
+    width: 36px; /* Adjust for smaller screens */
+    height: 36px; /* Adjust for smaller screens */
+  }
+
+  .logo-image:hover {
+    transform: translateY(-2px);
+    /* ... existing box-shadow ... */
+  }
+}
