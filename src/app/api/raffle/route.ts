@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 
+type SpreadsheetRow = string[];
+
+interface WeightedDonation {
+  giverAddress: string;
+  txHash: string;
+  value: number;
+  rowIndex: number;
+}
 async function getSpreadsheetData() {
   try {
     const auth = new JWT({
@@ -14,7 +22,7 @@ async function getSpreadsheetData() {
 
     const sheets = google.sheets({ version: 'v4', auth });
 
-    const spreadsheetId = '1zRPsyX8nHZEqGWlQlQSP6lAsQgJTAxaGCejfmcsWekY';
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
 
     console.log('Fetching spreadsheet metadata...');
     const spreadsheet = await sheets.spreadsheets.get({
@@ -53,10 +61,56 @@ async function getSpreadsheetData() {
   }
 }
 
+function selectRaffleWinners(data: any) {
+  const headers = data[0];
+  const giverAddressIndex = headers.indexOf('giverAddress');
+  const valueIndex = headers.indexOf('valueUsdAfterGivbackFactor');
+  const txHashIndex = headers.indexOf('txHash');
+
+  if (giverAddressIndex === -1 || valueIndex === -1 || txHashIndex === -1) {
+    throw new Error('Required columns not found in the spreadsheet');
+  }
+
+  const eligibleDonations: WeightedDonation[] = data.slice(1)
+    .map((row: any, index: any) => ({
+      giverAddress: row[giverAddressIndex],
+      txHash: row[txHashIndex],
+      value: parseFloat(row[valueIndex]),
+      rowIndex: index + 1
+    }))
+    .filter((donation: any) => donation.txHash && !isNaN(donation.value));
+
+  const totalWeight = eligibleDonations.reduce((sum, donation) => sum + donation.value, 0);
+  const winnerDetails: SpreadsheetRow[] = [];
+  const selectedGivers = new Set<string>();
+
+  while (winnerDetails.length < 5 && selectedGivers.size < eligibleDonations.length) {
+    const randomValue = Math.random() * totalWeight;
+    let accumulatedWeight = 0;
+    
+    for (let donation of eligibleDonations) {
+      accumulatedWeight += donation.value;
+      if (accumulatedWeight >= randomValue && !selectedGivers.has(donation.giverAddress)) {
+        selectedGivers.add(donation.giverAddress);
+        const rowData = data[donation.rowIndex];
+        winnerDetails.push([
+          rowData[giverAddressIndex],
+          rowData[valueIndex],
+          rowData[txHashIndex]
+        ]);
+        break;
+      }
+    }
+  }
+
+  return [['giverAddress', 'valueUsdAfterGivbackFactor', 'txHash'], ...winnerDetails];
+}
+
 export async function GET() {
   try {
     const data = await getSpreadsheetData();
-    return NextResponse.json({ message: 'Data fetched successfully', data: data.slice(0, 10) }, { status: 200 });
+    const winners = selectRaffleWinners(data);
+    return NextResponse.json({ message: 'Data fetched successfully', data: winners }, { status: 200 });
   } catch (error) {
     console.error('Error in GET request:', error);
     let errorMessage = 'Failed to fetch data';
