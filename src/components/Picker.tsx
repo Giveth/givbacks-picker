@@ -69,7 +69,7 @@ const Picker: React.FC = () => {
     <div className="picker-wrapper">
       <div className="twitter-picker">
         <h1>GIVBacks Winners</h1>
-        <h2>Round 63</h2>
+        <h2>Round 71</h2>
         <div className="button-container">
           <button 
             className={`pick-button ${isLoading ? 'loading' : ''}`}
