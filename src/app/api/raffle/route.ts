@@ -52,7 +52,7 @@ async function getSpreadsheetData() {
 
     console.log(`Data fetched successfully. Row count: ${rows.length}`);
     console.log('Headers:', rows[0]);
-    console.log('First 5 rows:', rows.slice(1, 6));
+    console.log('First 10 rows:', rows.slice(1, 10));
 
     return rows;
   } catch (error) {
@@ -84,7 +84,7 @@ function selectRaffleWinners(data: any) {
   const winnerDetails: SpreadsheetRow[] = [];
   const selectedGivers = new Set<string>();
 
-  while (winnerDetails.length < 5 && selectedGivers.size < eligibleDonations.length) {
+  while (winnerDetails.length < 10 && selectedGivers.size < eligibleDonations.length) {
     const randomValue = Math.random() * totalWeight;
     let accumulatedWeight = 0;
     

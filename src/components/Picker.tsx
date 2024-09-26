@@ -8,9 +8,17 @@ const Picker: React.FC = () => {
   const [winners, setWinners] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [roundNumber, setRoundNumber] = useState<string | null>(null); // New state for round number
 
   const pickSoundRef = useRef<HTMLAudioElement | null>(null);
   const copySoundRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const roundNumber = process.env.ROUND_NUMBER || 'undefined';
+      setRoundNumber(roundNumber);
+    }
+  }, []);
 
   useEffect(() => {
     pickSoundRef.current = new Audio('/sounds/pick-sound.wav');
@@ -36,13 +44,12 @@ const Picker: React.FC = () => {
       const responseData = await response.json();
       
       if (Array.isArray(responseData.data) && responseData.data.length > 1) {
-        const topFiveWinners = responseData.data
+        const topWinners = responseData.data
           .slice(1)
-          .sort((a: any, b: any) => parseFloat(b[1]) - parseFloat(a[1]))
-          .slice(0, 5)
+          .slice(0, 10)
           .map((winner: any) => winner[2]);
 
-        setWinners(topFiveWinners);
+        setWinners(topWinners);
       } else {
         setError('Received unexpected data format');
       }
@@ -65,11 +72,13 @@ const Picker: React.FC = () => {
     return index + 1;
   };
 
+  const isClient = typeof window !== 'undefined';
+
   return (
     <div className="picker-wrapper">
       <div className="twitter-picker">
         <h1>GIVBacks Winners</h1>
-        <h2>Round 71</h2>
+        {roundNumber && <h2>Round {roundNumber}</h2>}
         <div className="button-container">
           <button 
             className={`pick-button ${isLoading ? 'loading' : ''}`}

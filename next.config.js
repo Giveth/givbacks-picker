@@ -8,6 +8,9 @@ const nextConfig = {
       return config;
     },
     // Add any other Next.js config options you need here
+    env: {
+      ROUND_NUMBER: process.env.ROUND_NUMBER,
+    },
   };
   
 export default nextConfig;
