@@ -50,10 +50,6 @@ async function getSpreadsheetData() {
       throw new Error('No data found in the spreadsheet.');
     }
 
-    console.log(`Data fetched successfully. Row count: ${rows.length}`);
-    console.log('Headers:', rows[0]);
-    console.log('First 10 rows:', rows.slice(1, 10));
-
     return rows;
   } catch (error) {
     console.error('Error fetching spreadsheet data:', error);
@@ -71,35 +67,57 @@ function selectRaffleWinners(data: any) {
     throw new Error('Required columns not found in the spreadsheet');
   }
 
-  const eligibleDonations: WeightedDonation[] = data.slice(1)
-    .map((row: any, index: any) => ({
-      giverAddress: row[giverAddressIndex],
-      txHash: row[txHashIndex],
-      value: parseFloat(row[valueIndex]),
-      rowIndex: index + 1
-    }))
-    .filter((donation: any) => donation.txHash && !isNaN(donation.value));
+  // Calculate total weight and identify eligible donations in a single pass
+  let totalWeight = 0;
+  const eligibleDonations: number[] = []; // Store row indices directly
+  const uniqueGivers = new Set<string>();
 
-  const totalWeight = eligibleDonations.reduce((sum, donation) => sum + donation.value, 0);
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const giverAddress = row[giverAddressIndex];
+    const txHash = row[txHashIndex];
+    const value = parseFloat(row[valueIndex]);
+
+    if (txHash && !isNaN(value)) {
+      eligibleDonations.push(i);
+      totalWeight += value;
+      uniqueGivers.add(giverAddress);
+    }
+  }
+
+  if (eligibleDonations.length === 0) {
+    throw new Error('No eligible donations found');
+  }
+
+  const maxWinners = Math.min(20, uniqueGivers.size);
   const winnerDetails: SpreadsheetRow[] = [];
   const selectedGivers = new Set<string>();
 
-  while (winnerDetails.length < 10 && selectedGivers.size < eligibleDonations.length) {
+  while (winnerDetails.length < maxWinners) {
     const randomValue = Math.random() * totalWeight;
     let accumulatedWeight = 0;
-    
-    for (let donation of eligibleDonations) {
-      accumulatedWeight += donation.value;
-      if (accumulatedWeight >= randomValue && !selectedGivers.has(donation.giverAddress)) {
-        selectedGivers.add(donation.giverAddress);
-        const rowData = data[donation.rowIndex];
+
+    for (let rowIndex of eligibleDonations) {
+      const row = data[rowIndex];
+      const giverAddress = row[giverAddressIndex];
+      const value = parseFloat(row[valueIndex]);
+
+      accumulatedWeight += value;
+
+      if (accumulatedWeight >= randomValue && !selectedGivers.has(giverAddress)) {
+        selectedGivers.add(giverAddress);
         winnerDetails.push([
-          rowData[giverAddressIndex],
-          rowData[valueIndex],
-          rowData[txHashIndex]
+          giverAddress,
+          value.toString(),
+          row[txHashIndex],
         ]);
         break;
       }
+    }
+
+    // Break if all unique givers have been selected
+    if (selectedGivers.size >= uniqueGivers.size) {
+      break;
     }
   }
 

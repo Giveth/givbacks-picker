@@ -46,7 +46,7 @@ const Picker: React.FC = () => {
       if (Array.isArray(responseData.data) && responseData.data.length > 1) {
         const topWinners = responseData.data
           .slice(1)
-          .slice(0, 10)
+          .slice(0, 20)
           .map((winner: any) => winner[2]);
 
         setWinners(topWinners);
