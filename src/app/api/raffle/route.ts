@@ -78,7 +78,7 @@ function selectRaffleWinners(data: any) {
     const value = parseFloat(row[valueIndex]);
 
     if (txHash && !isNaN(value)) {
-      const weight = Math.pow(value, 0.8); // Adding 1 to avoid log(0)
+      const weight = Math.pow(value, 0.9);
       eligibleDonations.push({ index: i, weight });
       uniqueGivers.add(giverAddress);
     }
