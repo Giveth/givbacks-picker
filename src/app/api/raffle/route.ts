@@ -68,8 +68,7 @@ function selectRaffleWinners(data: any) {
   }
 
   // Calculate total weight and identify eligible donations in a single pass
-  let totalWeight = 0;
-  const eligibleDonations: number[] = []; // Store row indices directly
+  const eligibleDonations: { index: number; weight: number }[] = [];
   const uniqueGivers = new Set<string>();
 
   for (let i = 1; i < data.length; i++) {
@@ -79,8 +78,8 @@ function selectRaffleWinners(data: any) {
     const value = parseFloat(row[valueIndex]);
 
     if (txHash && !isNaN(value)) {
-      eligibleDonations.push(i);
-      totalWeight += value;
+      const weight = Math.log10(value + 1); // Adding 1 to avoid log(0)
+      eligibleDonations.push({ index: i, weight });
       uniqueGivers.add(giverAddress);
     }
   }
@@ -89,26 +88,35 @@ function selectRaffleWinners(data: any) {
     throw new Error('No eligible donations found');
   }
 
+  // Shuffle eligible donations to remove bias from original order
+  shuffleArray(eligibleDonations);
+
+  const totalWeight = eligibleDonations.reduce((sum, donation) => sum + donation.weight, 0);
+  eligibleDonations.forEach(donation => {
+    donation.weight /= totalWeight; // Normalize each weight to sum to 1
+  });
+
   const maxWinners = Math.min(20, uniqueGivers.size);
   const winnerDetails: SpreadsheetRow[] = [];
   const selectedGivers = new Set<string>();
 
   while (winnerDetails.length < maxWinners) {
-    const randomValue = Math.random() * totalWeight;
+    const randomValue = Math.random();
     let accumulatedWeight = 0;
 
-    for (let rowIndex of eligibleDonations) {
+    for (let donation of eligibleDonations) {
+      const rowIndex = donation.index;
       const row = data[rowIndex];
       const giverAddress = row[giverAddressIndex];
-      const value = parseFloat(row[valueIndex]);
+      const weight = donation.weight;
 
-      accumulatedWeight += value;
+      accumulatedWeight += weight;
 
       if (accumulatedWeight >= randomValue && !selectedGivers.has(giverAddress)) {
         selectedGivers.add(giverAddress);
         winnerDetails.push([
           giverAddress,
-          value.toString(),
+          row[valueIndex].toString(),
           row[txHashIndex],
         ]);
         break;
@@ -137,6 +145,15 @@ export async function GET() {
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
+}
+
+// Utility function to shuffle an array
+function shuffleArray<T>(array: T[]): T[] {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
 }
 
 export async function POST() {
