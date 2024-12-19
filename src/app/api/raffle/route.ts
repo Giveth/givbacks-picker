@@ -88,9 +88,6 @@ function selectRaffleWinners(data: any) {
     throw new Error('No eligible donations found');
   }
 
-  // Shuffle eligible donations to remove bias from original order
-  shuffleArray(eligibleDonations);
-
   const totalWeight = eligibleDonations.reduce((sum, donation) => sum + donation.weight, 0);
   eligibleDonations.forEach(donation => {
     donation.weight /= totalWeight; // Normalize each weight to sum to 1
@@ -102,25 +99,34 @@ function selectRaffleWinners(data: any) {
 
   while (winnerDetails.length < maxWinners) {
     const randomValue = Math.random();
-    let accumulatedWeight = 0;
-
-    for (let donation of eligibleDonations) {
-      const rowIndex = donation.index;
-      const row = data[rowIndex];
-      const giverAddress = row[giverAddressIndex];
-      const weight = donation.weight;
-
-      accumulatedWeight += weight;
-
-      if (accumulatedWeight >= randomValue && !selectedGivers.has(giverAddress)) {
-        selectedGivers.add(giverAddress);
-        winnerDetails.push([
-          giverAddress,
-          row[valueIndex].toString(),
-          row[txHashIndex],
-        ]);
-        break;
+    let selectedDonation = null;
+    
+    // Select based on probability without bias from order
+    for (const donation of eligibleDonations) {
+      if (Math.random() < donation.weight) {
+        const rowIndex = donation.index;
+        const row = data[rowIndex];
+        const giverAddress = row[giverAddressIndex];
+        
+        if (!selectedGivers.has(giverAddress)) {
+          selectedDonation = {
+            giverAddress,
+            value: row[valueIndex].toString(),
+            txHash: row[txHashIndex]
+          };
+          break;
+        }
       }
+    }
+
+    // If we found a valid selection, add it
+    if (selectedDonation) {
+      selectedGivers.add(selectedDonation.giverAddress);
+      winnerDetails.push([
+        selectedDonation.giverAddress,
+        selectedDonation.value,
+        selectedDonation.txHash
+      ]);
     }
 
     // Break if all unique givers have been selected
