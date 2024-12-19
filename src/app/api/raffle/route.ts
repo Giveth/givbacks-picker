@@ -98,7 +98,6 @@ function selectRaffleWinners(data: any) {
   const selectedGivers = new Set<string>();
 
   while (winnerDetails.length < maxWinners) {
-    const randomValue = Math.random();
     let selectedDonation = null;
     
     // Select based on probability without bias from order
@@ -119,7 +118,6 @@ function selectRaffleWinners(data: any) {
       }
     }
 
-    // If we found a valid selection, add it
     if (selectedDonation) {
       selectedGivers.add(selectedDonation.giverAddress);
       winnerDetails.push([
