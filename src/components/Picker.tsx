@@ -89,9 +89,11 @@ const Picker: React.FC = () => {
       if (topWinners.length > 0) {
         setWinners(topWinners);
       } else {
+        setWinners([]);
         setError('Received unexpected data format');
       }
     } catch (err) {
+      setWinners([]);
       setError('Failed to fetch winners. Please try again.');
     } finally {
       setIsLoading(false);
