@@ -4,12 +4,27 @@ import { JWT } from 'google-auth-library';
 
 type SpreadsheetRow = string[];
 
-interface WeightedDonation {
+interface EligibleDonation {
+  index: number;
+  weight: number;
+}
+
+interface SelectedDonation {
+  donationId: string;
   giverAddress: string;
   txHash: string;
-  value: number;
-  rowIndex: number;
+  value: string;
 }
+
+const findHeaderIndex = (
+  headers: SpreadsheetRow,
+  acceptedNames: string[],
+): number => {
+  return headers.findIndex(header =>
+    acceptedNames.includes(header.trim()),
+  );
+}
+
 async function getSpreadsheetData() {
   try {
     const auth = new JWT({
@@ -57,27 +72,37 @@ async function getSpreadsheetData() {
   }
 }
 
-function selectRaffleWinners(data: any) {
+function selectRaffleWinners(data: SpreadsheetRow[]) {
   const headers = data[0];
-  const giverAddressIndex = headers.indexOf('giverAddress');
-  const valueIndex = headers.indexOf('valueUsdAfterGivbackFactor');
-  const txHashIndex = headers.indexOf('txHash');
+  const donationIdIndex = findHeaderIndex(headers, ['donationId']);
+  const giverAddressIndex = findHeaderIndex(headers, [
+    'giverAddress',
+    'fromWalletAddress',
+  ]);
+  const valueIndex = findHeaderIndex(headers, ['valueUsdAfterGivbackFactor']);
+  const txHashIndex = findHeaderIndex(headers, ['txHash', 'transactionId']);
 
-  if (giverAddressIndex === -1 || valueIndex === -1 || txHashIndex === -1) {
+  if (
+    donationIdIndex === -1 ||
+    giverAddressIndex === -1 ||
+    valueIndex === -1 ||
+    txHashIndex === -1
+  ) {
     throw new Error('Required columns not found in the spreadsheet');
   }
 
   // Calculate total weight and identify eligible donations in a single pass
-  const eligibleDonations: { index: number; weight: number }[] = [];
+  const eligibleDonations: EligibleDonation[] = [];
   const uniqueGivers = new Set<string>();
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
+    const donationId = row[donationIdIndex];
     const giverAddress = row[giverAddressIndex];
     const txHash = row[txHashIndex];
     const value = parseFloat(row[valueIndex]);
 
-    if (txHash && !isNaN(value)) {
+    if (donationId && txHash && giverAddress && !isNaN(value) && value > 0) {
       const weight = Math.pow(value, 1);
       eligibleDonations.push({ index: i, weight });
       uniqueGivers.add(giverAddress);
@@ -89,6 +114,10 @@ function selectRaffleWinners(data: any) {
   }
 
   const totalWeight = eligibleDonations.reduce((sum, donation) => sum + donation.weight, 0);
+  if (totalWeight <= 0) {
+    throw new Error('No eligible donations with positive weight found');
+  }
+
   eligibleDonations.forEach(donation => {
     donation.weight /= totalWeight; // Normalize each weight to sum to 1
   });
@@ -98,29 +127,50 @@ function selectRaffleWinners(data: any) {
   const selectedGivers = new Set<string>();
 
   while (winnerDetails.length < maxWinners) {
-    let selectedDonation = null;
-    
-    // Select based on probability without bias from order
-    for (const donation of eligibleDonations) {
-      if (Math.random() < donation.weight) {
-        const rowIndex = donation.index;
-        const row = data[rowIndex];
-        const giverAddress = row[giverAddressIndex];
-        
-        if (!selectedGivers.has(giverAddress)) {
-          selectedDonation = {
-            giverAddress,
-            value: row[valueIndex].toString(),
-            txHash: row[txHashIndex]
-          };
-          break;
-        }
-      }
+    let selectedDonation: SelectedDonation | null = null;
+
+    const availableDonations = eligibleDonations.filter(donation => {
+      const row = data[donation.index];
+      const giverAddress = row[giverAddressIndex];
+
+      return !selectedGivers.has(giverAddress);
+    });
+
+    if (availableDonations.length === 0) {
+      break;
+    }
+
+    const availableWeight = availableDonations.reduce(
+      (sum, donation) => sum + donation.weight,
+      0,
+    );
+
+    if (availableWeight <= 0) {
+      break;
+    }
+
+    const randomWeight = Math.random() * availableWeight;
+    let cumulativeWeight = 0;
+    const selectedWeightedDonation =
+      availableDonations.find(donation => {
+        cumulativeWeight += donation.weight;
+        return cumulativeWeight >= randomWeight;
+      }) ?? availableDonations[availableDonations.length - 1];
+
+    if (selectedWeightedDonation) {
+      const row = data[selectedWeightedDonation.index];
+      selectedDonation = {
+        donationId: row[donationIdIndex],
+        giverAddress: row[giverAddressIndex],
+        value: row[valueIndex].toString(),
+        txHash: row[txHashIndex]
+      };
     }
 
     if (selectedDonation) {
       selectedGivers.add(selectedDonation.giverAddress);
       winnerDetails.push([
+        selectedDonation.donationId,
         selectedDonation.giverAddress,
         selectedDonation.value,
         selectedDonation.txHash
@@ -133,7 +183,10 @@ function selectRaffleWinners(data: any) {
     }
   }
 
-  return [['giverAddress', 'valueUsdAfterGivbackFactor', 'txHash'], ...winnerDetails];
+  return [
+    ['donationId', 'giverAddress', 'valueUsdAfterGivbackFactor', 'txHash'],
+    ...winnerDetails,
+  ];
 }
 
 export async function GET() {
