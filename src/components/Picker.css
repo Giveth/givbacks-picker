@@ -217,6 +217,22 @@
   overflow: hidden;
 }
 
+.winner-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.winner-donation-id,
+.winner-txhash {
+  word-break: break-all;
+}
+
+.winner-donation-id {
+  font-weight: 700;
+}
+
 .winner-item:hover {
   background: var(--button-hover);
   transform: translateY(-2px);
@@ -264,5 +280,9 @@
   .winner-string {
     font-size: 0.5rem;
     margin-left: 0.5rem; /* Add left margin to move text to the right */
+  }
+
+  .winner-details {
+    margin-left: 0.5rem;
   }
 }

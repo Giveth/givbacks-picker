@@ -4,8 +4,50 @@ import React, { useState, useEffect, useRef } from 'react';
 import './Picker.css';
 import { FaMagic, FaCopy } from 'react-icons/fa';
 
+interface RaffleWinner {
+  donationId: string;
+  txHash: string;
+}
+
+const findColumnIndex = (headers: unknown[], columnName: string): number =>
+  headers.findIndex(header => header === columnName);
+
+const parseWinnerRows = (data: unknown): RaffleWinner[] => {
+  if (!Array.isArray(data) || data.length <= 1 || !Array.isArray(data[0])) {
+    return [];
+  }
+
+  const headers = data[0];
+  const donationIdIndex = findColumnIndex(headers, 'donationId');
+  const txHashIndex = findColumnIndex(headers, 'txHash');
+
+  if (donationIdIndex === -1 || txHashIndex === -1) {
+    return [];
+  }
+
+  return data.slice(1, 21).flatMap(row => {
+    if (!Array.isArray(row)) {
+      return [];
+    }
+
+    const donationId = row[donationIdIndex];
+    const txHash = row[txHashIndex];
+
+    if (donationId == null || txHash == null) {
+      return [];
+    }
+
+    return [
+      {
+        donationId: String(donationId),
+        txHash: String(txHash),
+      },
+    ];
+  });
+};
+
 const Picker: React.FC = () => {
-  const [winners, setWinners] = useState<string[]>([]);
+  const [winners, setWinners] = useState<RaffleWinner[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [roundNumber, setRoundNumber] = useState<string | null>(null); // New state for round number
@@ -43,12 +85,8 @@ const Picker: React.FC = () => {
       }
       const responseData = await response.json();
       
-      if (Array.isArray(responseData.data) && responseData.data.length > 1) {
-        const topWinners = responseData.data
-          .slice(1)
-          .slice(0, 20)
-          .map((winner: any) => winner[2]);
-
+      const topWinners = parseWinnerRows(responseData.data);
+      if (topWinners.length > 0) {
         setWinners(topWinners);
       } else {
         setError('Received unexpected data format');
@@ -62,7 +100,9 @@ const Picker: React.FC = () => {
 
   const copyAllWinners = () => {
     playSound(copySoundRef);
-    const winnersList = winners.join('\n');
+    const winnersList = winners
+      .map(winner => `Donation ID: ${winner.donationId} | Tx: ${winner.txHash}`)
+      .join('\n');
     navigator.clipboard.writeText(winnersList)
       .then(() => alert('Winners copied to clipboard!'))
       .catch(err => console.error('Failed to copy: ', err));
@@ -103,9 +143,19 @@ const Picker: React.FC = () => {
             <h2 className="winners-title">Winners</h2>
             <ul className="winners-list">
               {winners.map((winner, index) => (
-                <li key={index} className="winner-item">
+                <li
+                  key={`${winner.donationId}-${winner.txHash}`}
+                  className="winner-item"
+                >
                   <span className="winner-rank">{getRankNumber(index)}</span>
-                  <span className="winner-txhash">{winner}</span>
+                  <span className="winner-details">
+                    <span className="winner-donation-id">
+                      Donation ID: {winner.donationId}
+                    </span>
+                    <span className="winner-txhash">
+                      Tx: {winner.txHash}
+                    </span>
+                  </span>
                 </li>
               ))}
             </ul>

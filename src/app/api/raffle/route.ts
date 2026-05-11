@@ -4,12 +4,27 @@ import { JWT } from 'google-auth-library';
 
 type SpreadsheetRow = string[];
 
-interface WeightedDonation {
+interface EligibleDonation {
+  index: number;
+  weight: number;
+}
+
+interface SelectedDonation {
+  donationId: string;
   giverAddress: string;
   txHash: string;
-  value: number;
-  rowIndex: number;
+  value: string;
 }
+
+const findHeaderIndex = (
+  headers: SpreadsheetRow,
+  acceptedNames: string[],
+): number => {
+  return headers.findIndex(header =>
+    acceptedNames.includes(header.trim()),
+  );
+}
+
 async function getSpreadsheetData() {
   try {
     const auth = new JWT({
@@ -57,27 +72,37 @@ async function getSpreadsheetData() {
   }
 }
 
-function selectRaffleWinners(data: any) {
+function selectRaffleWinners(data: SpreadsheetRow[]) {
   const headers = data[0];
-  const giverAddressIndex = headers.indexOf('giverAddress');
+  const donationIdIndex = findHeaderIndex(headers, ['donationId']);
+  const giverAddressIndex = findHeaderIndex(headers, [
+    'giverAddress',
+    'fromWalletAddress',
+  ]);
   const valueIndex = headers.indexOf('valueUsdAfterGivbackFactor');
-  const txHashIndex = headers.indexOf('txHash');
+  const txHashIndex = findHeaderIndex(headers, ['txHash', 'transactionId']);
 
-  if (giverAddressIndex === -1 || valueIndex === -1 || txHashIndex === -1) {
+  if (
+    donationIdIndex === -1 ||
+    giverAddressIndex === -1 ||
+    valueIndex === -1 ||
+    txHashIndex === -1
+  ) {
     throw new Error('Required columns not found in the spreadsheet');
   }
 
   // Calculate total weight and identify eligible donations in a single pass
-  const eligibleDonations: { index: number; weight: number }[] = [];
+  const eligibleDonations: EligibleDonation[] = [];
   const uniqueGivers = new Set<string>();
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
+    const donationId = row[donationIdIndex];
     const giverAddress = row[giverAddressIndex];
     const txHash = row[txHashIndex];
     const value = parseFloat(row[valueIndex]);
 
-    if (txHash && !isNaN(value)) {
+    if (donationId && txHash && giverAddress && !isNaN(value)) {
       const weight = Math.pow(value, 1);
       eligibleDonations.push({ index: i, weight });
       uniqueGivers.add(giverAddress);
@@ -98,17 +123,19 @@ function selectRaffleWinners(data: any) {
   const selectedGivers = new Set<string>();
 
   while (winnerDetails.length < maxWinners) {
-    let selectedDonation = null;
+    let selectedDonation: SelectedDonation | null = null;
     
     // Select based on probability without bias from order
     for (const donation of eligibleDonations) {
       if (Math.random() < donation.weight) {
         const rowIndex = donation.index;
         const row = data[rowIndex];
+        const donationId = row[donationIdIndex];
         const giverAddress = row[giverAddressIndex];
         
         if (!selectedGivers.has(giverAddress)) {
           selectedDonation = {
+            donationId,
             giverAddress,
             value: row[valueIndex].toString(),
             txHash: row[txHashIndex]
@@ -121,6 +148,7 @@ function selectRaffleWinners(data: any) {
     if (selectedDonation) {
       selectedGivers.add(selectedDonation.giverAddress);
       winnerDetails.push([
+        selectedDonation.donationId,
         selectedDonation.giverAddress,
         selectedDonation.value,
         selectedDonation.txHash
@@ -133,7 +161,10 @@ function selectRaffleWinners(data: any) {
     }
   }
 
-  return [['giverAddress', 'valueUsdAfterGivbackFactor', 'txHash'], ...winnerDetails];
+  return [
+    ['donationId', 'giverAddress', 'valueUsdAfterGivbackFactor', 'txHash'],
+    ...winnerDetails,
+  ];
 }
 
 export async function GET() {
