@@ -3,7 +3,7 @@
 // against realistic mock spreadsheet data. The googleapis client is mocked
 // so the test runs offline.
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   sampleRows,
   sampleRowsAliased,
@@ -47,9 +47,13 @@ describe('GET /api/raffle (route handler, realistic mocked sheet)', () => {
     vi.resetModules()
     sheetsGet.mockReset()
     valuesGet.mockReset()
-    process.env.GOOGLE_SHEET_ID = 'fake-spreadsheet-id'
-    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL = 'fake@example.com'
-    process.env.GOOGLE_PRIVATE_KEY = 'fake-private-key'
+    vi.stubEnv('GOOGLE_SHEET_ID', 'fake-spreadsheet-id')
+    vi.stubEnv('GOOGLE_SERVICE_ACCOUNT_EMAIL', 'fake@example.com')
+    vi.stubEnv('GOOGLE_PRIVATE_KEY', 'fake-private-key')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('returns a 200 with a donationId-headed payload from realistic data', async () => {
