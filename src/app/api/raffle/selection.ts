@@ -20,6 +20,9 @@ const findHeaderIndex = (
 }
 
 export function selectRaffleWinners(data: SpreadsheetRow[]): SpreadsheetRow[] {
+  if (!data || data.length === 0 || !data[0]) {
+    throw new Error('Required columns not found in the spreadsheet')
+  }
   const headers = data[0]
   const donationIdIndex = findHeaderIndex(headers, ['donationId'])
   const giverAddressIndex = findHeaderIndex(headers, [

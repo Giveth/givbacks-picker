@@ -61,6 +61,15 @@ describe('selectRaffleWinners', () => {
     )
   })
 
+  it('throws "Required columns not found in the spreadsheet" when input is empty', () => {
+    expect(() => selectRaffleWinners([])).toThrowError(
+      'Required columns not found in the spreadsheet',
+    )
+    expect(() => selectRaffleWinners([[]])).toThrowError(
+      'Required columns not found in the spreadsheet',
+    )
+  })
+
   it('throws when no eligible donations remain', () => {
     const data = [
       ['donationId', 'giverAddress', 'valueUsdAfterGivbackFactor', 'txHash'],
