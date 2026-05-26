@@ -128,13 +128,20 @@ describe('GET /api/raffle (route handler, realistic mocked sheet)', () => {
     }
   })
 
-  it('returns 500 with "Required columns not found in the spreadsheet" when donationId column is absent', async () => {
+  it('falls back to the 3-column legacy format when donationId column is absent', async () => {
     setMockSheet(sampleRowsNoDonationId)
     const res = await callRoute()
-    expect(res.status).toBe(500)
+    expect(res.status).toBe(200)
 
-    const body = await res.json()
-    expect(body.error).toBe('Required columns not found in the spreadsheet')
+    const { data } = await res.json()
+    expect(data[0]).toEqual(['giverAddress', 'valueUsdAfterGivbackFactor', 'txHash'])
+    expect(data.length).toBeGreaterThan(1)
+    for (const row of data.slice(1)) {
+      expect(row.length).toBe(3)
+      expect(row[0]).toMatch(/^0x[0-9a-f]{40}$/i)
+      expect(parseFloat(row[1])).toBeGreaterThan(0)
+      expect(row[2]).toMatch(/^0x[0-9a-f]+$/i)
+    }
   })
 
   it('returns 500 when the spreadsheet is empty', async () => {

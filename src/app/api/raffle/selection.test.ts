@@ -51,14 +51,39 @@ describe('selectRaffleWinners', () => {
     expect(out[1][0]).toBe('d1')
   })
 
-  it('throws "Required columns not found in the spreadsheet" when donationId is missing', () => {
+  it('falls back to the 3-column legacy format when donationId column is absent', () => {
     const data = [
       ['giverAddress', 'valueUsdAfterGivbackFactor', 'txHash'],
       ['0xa', '100', '0xtx1'],
+      ['0xb', '50', '0xtx2'],
     ]
-    expect(() => selectRaffleWinners(data)).toThrowError(
-      'Required columns not found in the spreadsheet',
-    )
+    const out = selectRaffleWinners(data)
+    expect(out[0]).toEqual(['giverAddress', 'valueUsdAfterGivbackFactor', 'txHash'])
+    expect(out.length).toBe(3)
+    expect(out.slice(1).every(r => r.length === 3)).toBe(true)
+  })
+
+  it('throws "Required columns not found in the spreadsheet" when giverAddress, value, or txHash is missing', () => {
+    expect(() =>
+      selectRaffleWinners([
+        ['donationId', 'valueUsdAfterGivbackFactor', 'txHash'],
+        ['d1', '100', '0xtx1'],
+      ]),
+    ).toThrowError('Required columns not found in the spreadsheet')
+
+    expect(() =>
+      selectRaffleWinners([
+        ['donationId', 'giverAddress', 'txHash'],
+        ['d1', '0xa', '0xtx1'],
+      ]),
+    ).toThrowError('Required columns not found in the spreadsheet')
+
+    expect(() =>
+      selectRaffleWinners([
+        ['donationId', 'giverAddress', 'valueUsdAfterGivbackFactor'],
+        ['d1', '0xa', '100'],
+      ]),
+    ).toThrowError('Required columns not found in the spreadsheet')
   })
 
   it('throws "Required columns not found in the spreadsheet" when input is empty', () => {

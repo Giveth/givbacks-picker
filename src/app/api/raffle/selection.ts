@@ -5,13 +5,6 @@ interface EligibleDonation {
   weight: number
 }
 
-interface SelectedDonation {
-  donationId: string
-  giverAddress: string
-  txHash: string
-  value: string
-}
-
 const findHeaderIndex = (
   headers: SpreadsheetRow,
   acceptedNames: string[],
@@ -23,6 +16,7 @@ export function selectRaffleWinners(data: SpreadsheetRow[]): SpreadsheetRow[] {
   if (!data || data.length === 0 || !data[0]) {
     throw new Error('Required columns not found in the spreadsheet')
   }
+
   const headers = data[0]
   const donationIdIndex = findHeaderIndex(headers, ['donationId'])
   const giverAddressIndex = findHeaderIndex(headers, [
@@ -32,28 +26,26 @@ export function selectRaffleWinners(data: SpreadsheetRow[]): SpreadsheetRow[] {
   const valueIndex = findHeaderIndex(headers, ['valueUsdAfterGivbackFactor'])
   const txHashIndex = findHeaderIndex(headers, ['txHash', 'transactionId'])
 
-  if (
-    donationIdIndex === -1 ||
-    giverAddressIndex === -1 ||
-    valueIndex === -1 ||
-    txHashIndex === -1
-  ) {
+  // donationId is optional so the picker keeps working on legacy sheets
+  // that haven't been migrated yet. The other three are still required.
+  if (giverAddressIndex === -1 || valueIndex === -1 || txHashIndex === -1) {
     throw new Error('Required columns not found in the spreadsheet')
   }
+
+  const hasDonationId = donationIdIndex !== -1
 
   const eligibleDonations: EligibleDonation[] = []
   const uniqueGivers = new Set<string>()
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i]
-    const donationId = row[donationIdIndex]
     const giverAddress = row[giverAddressIndex]
     const txHash = row[txHashIndex]
     const value = parseFloat(row[valueIndex])
+    const donationIdOk = !hasDonationId || !!row[donationIdIndex]
 
-    if (donationId && txHash && giverAddress && !isNaN(value) && value > 0) {
-      const weight = Math.pow(value, 1)
-      eligibleDonations.push({ index: i, weight })
+    if (donationIdOk && txHash && giverAddress && !isNaN(value) && value > 0) {
+      eligibleDonations.push({ index: i, weight: Math.pow(value, 1) })
       uniqueGivers.add(giverAddress)
     }
   }
@@ -79,62 +71,45 @@ export function selectRaffleWinners(data: SpreadsheetRow[]): SpreadsheetRow[] {
   const selectedGivers = new Set<string>()
 
   while (winnerDetails.length < maxWinners) {
-    let selectedDonation: SelectedDonation | null = null
-
     const availableDonations = eligibleDonations.filter(donation => {
-      const row = data[donation.index]
-      const giverAddress = row[giverAddressIndex]
+      const giverAddress = data[donation.index][giverAddressIndex]
       return !selectedGivers.has(giverAddress)
     })
 
-    if (availableDonations.length === 0) {
-      break
-    }
+    if (availableDonations.length === 0) break
 
     const availableWeight = availableDonations.reduce(
       (sum, donation) => sum + donation.weight,
       0,
     )
-
-    if (availableWeight <= 0) {
-      break
-    }
+    if (availableWeight <= 0) break
 
     const randomWeight = Math.random() * availableWeight
     let cumulativeWeight = 0
-    const selectedWeightedDonation =
+    const picked =
       availableDonations.find(donation => {
         cumulativeWeight += donation.weight
         return cumulativeWeight >= randomWeight
       }) ?? availableDonations[availableDonations.length - 1]
 
-    if (selectedWeightedDonation) {
-      const row = data[selectedWeightedDonation.index]
-      selectedDonation = {
-        donationId: row[donationIdIndex],
-        giverAddress: row[giverAddressIndex],
-        value: row[valueIndex].toString(),
-        txHash: row[txHashIndex],
-      }
-    }
+    const row = data[picked.index]
+    const giverAddress = row[giverAddressIndex]
+    const value = row[valueIndex].toString()
+    const txHash = row[txHashIndex]
 
-    if (selectedDonation) {
-      selectedGivers.add(selectedDonation.giverAddress)
-      winnerDetails.push([
-        selectedDonation.donationId,
-        selectedDonation.giverAddress,
-        selectedDonation.value,
-        selectedDonation.txHash,
-      ])
-    }
+    selectedGivers.add(giverAddress)
+    winnerDetails.push(
+      hasDonationId
+        ? [row[donationIdIndex], giverAddress, value, txHash]
+        : [giverAddress, value, txHash],
+    )
 
-    if (selectedGivers.size >= uniqueGivers.size) {
-      break
-    }
+    if (selectedGivers.size >= uniqueGivers.size) break
   }
 
-  return [
-    ['donationId', 'giverAddress', 'valueUsdAfterGivbackFactor', 'txHash'],
-    ...winnerDetails,
-  ]
+  const headerRow = hasDonationId
+    ? ['donationId', 'giverAddress', 'valueUsdAfterGivbackFactor', 'txHash']
+    : ['giverAddress', 'valueUsdAfterGivbackFactor', 'txHash']
+
+  return [headerRow, ...winnerDetails]
 }
